@@ -50,16 +50,19 @@ class Constants {
     SkyState.sun :    "assets/sun.glb"
   };
 
-  static const String apiKey = "7bb78224c14db81f46bc1d6f86a3e8c3";
+  static const String weatherIcon = 'assets/sun1.png';
+  static const String noImageImg = 'assets/no_image.png';
+  static const String cityImg = 'assets/city1.png';
 
-  static const String errorMessage = '';
+  static const String apiKey = "7bb78224c14db81f46bc1d6f86a3e8c3";
 
   static const Color bgColorAppBar =    Color.fromRGBO(70, 160, 190, 1);
   static const Color bgColorDay =       Color.fromRGBO(150, 240, 250, 0.85);
   static const Color bgColorCloudyDay = Color.fromRGBO(150, 240, 250, 0.5);
   static const Color bgColorNight =     Color.fromRGBO(45, 55, 83, 1);
   static const Color textColor =        Color.fromRGBO(255, 255, 255, 1);
-  static const Color errorColor =       Color.fromRGBO(50, 50, 50, 0.65);
+  static const Color errorLightColor =  Color.fromRGBO(200, 200, 200, 0.65);
+  static const Color errorDarkColor =   Color.fromRGBO(50, 50, 50, 0.65);
 
   static String getWeather(int cityID, String apiKey){
     return "http://api.openweathermap.org/data/2.5/forecast?id=$cityID&APPID=$apiKey";

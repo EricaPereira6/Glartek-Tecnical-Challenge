@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -17,6 +18,8 @@ class VisualWeatherPage extends StatefulWidget {
 
 class _VisualWeatherPageState extends State<VisualWeatherPage> {
 
+  String errorMessage = '';
+
   @override
   void initState() {
     super.initState();
@@ -30,39 +33,62 @@ class _VisualWeatherPageState extends State<VisualWeatherPage> {
   String? skyStateAsset;
 
   bool isLoaded = false;
+  bool isNight = false;
 
   Color backgroundColor = Constants.bgColorDay;
 
   _getData(Citys city) async {
     int? id = Constants.cityID[city];
-    if (id == null) {return;}
-    cityWeather = await Service().getCityWeather(id);
-    if (cityWeather == null) {return;}
+    if (id != null) {
+      try {
+        cityWeather = await Service().getCityWeather(id);
+        if (cityWeather != null) {
+          setState(() {
+            ListElement currentWeather = cityWeather!.list[0];
+            temperature = currentWeather.main.tempInCelsius();
+            state = currentWeather.weather.main;
+            dt = currentWeather.dtTxt;
 
-    setState(() {
-      ListElement currentWeather = cityWeather!.list[0];
-      temperature = currentWeather.main.tempInCelsius();
-      state = currentWeather.weather.main;
-      dt = currentWeather.dtTxt;
+            backgroundColor = (dt!.hour < 6 || dt!.hour > 18) ? Constants.bgColorNight :
+            (state == Constants.stateMainStr[SkyState.rain]) ? Constants.bgColorCloudyDay : Constants.bgColorDay;
 
-      backgroundColor = (dt!.hour < 6 || dt!.hour > 18) ? Constants.bgColorNight :
-      (state == Constants.stateMainStr[SkyState.rain]) ? Constants.bgColorCloudyDay : Constants.bgColorDay;
-      Constants.stateMainStr.forEach((key, value) {
-        if (value == state) {
-          skyStateAsset = Constants.stateAsset[key];
+            isNight = (dt!.hour < 6 || dt!.hour > 18);
+
+            Constants.stateMainStr.forEach((key, value) {
+              if (value == state) {
+                skyStateAsset = Constants.stateAsset[key];
+              }
+            });
+
+            isLoaded = true;
+
+            // if (kDebugMode) {
+            //   print("weather");
+            //   print("temperature $temperature");
+            //   print("state $state");
+            //   print("dt $dt");
+            // }
+          });
         }
+        else {
+          setState(() {
+            errorMessage = "Não foi possível obter a informação do\nOpenWeather";
+            isLoaded = true;
+          });
+        }
+      } catch (e) {
+        setState(() {
+          errorMessage = "Ocorreu um problema com a\n conexão à\nAPI OpenWeather";
+          isLoaded = true;
+        });
+      }
+    }
+    else {
+      setState(() {
+        errorMessage = "Não foi possível obter o id correto da cidade";
+        isLoaded = true;
       });
-      skyStateAsset ??= "Assets/sun.glb";
-
-      isLoaded = true;
-
-      // if (kDebugMode) {
-      //   print("weather");
-      //   print("temperature $temperature");
-      //   print("state $state");
-      //   print("dt $dt");
-      // }
-    });
+    }
   }
 
   @override
@@ -92,38 +118,57 @@ class _VisualWeatherPageState extends State<VisualWeatherPage> {
               child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-              // DateTime
-                Center(child: Text("${dt!.day}-${dt!.month}-${dt!.year} "
+                // DateTime
+                (() {
+                  try {
+                    return Center(child: Text("${dt!.day}-${dt!.month}-${dt!.year} "
                     "${dt!.hour}:${(dt!.minute < 10) ? '0' : ''}${dt!.minute}"
                     ":${(dt!.minute < 10) ? '0' : ''}${dt!.second}",
-                  style: const TextStyle(fontSize: 30, color: Constants.textColor),),),
+                    style: const TextStyle(fontSize: 30, color: Constants.textColor),),);
+                  }
+                  catch (e) {
+                    // if (errorMessage == '') {
+                    //   errorMessage = "Não foi possível carregar os dados";
+                    // }
+                    return const Center(child: Text("---------- --:--:--",
+                      style: TextStyle(fontSize: 30, color: Constants.textColor),),);
+                  }
+                }()),
 
                 // 3D Visualizer
-                SizedBox(
-                  height: 300,
-                  child: Center(
-                    child:
-                    ModelViewer(
-                      src: skyStateAsset!,
-                      autoRotate: true,
-                      //cameraControls: false,
-                      disableZoom: true,
-                      // disablePan: true,
-                      rotationPerSecond: "30deg",
-                    ),
-                  ),
-                ),
+                (() {
+                  try {
+                    return SizedBox(
+                      height: 300,
+                      child: Center(
+                        child: ModelViewer(
+                          src: skyStateAsset!,
+                          autoRotate: true,
+                          //cameraControls: false,
+                          disableZoom: true,
+                          // disablePan: true,
+                          rotationPerSecond: "30deg",
+                    ),),);
+                  } catch (e) {
+                    setState(() {
+                      if (errorMessage == '') {
+                        errorMessage = "Não foi possível carregar a imagem";
+                      }
+                    });
+                    return const SizedBox(height: 300, child: Image(image: AssetImage(Constants.noImageImg)),);
+                  }
+                }()),
 
                 // Temperature
-                Center(child: Text("$temperature ºC",
-                  style: const TextStyle(fontSize: 70, color: Constants.textColor,
-                      fontWeight: FontWeight.bold),),),
+                Center(child: Text("${(temperature == null) ? '--' : temperature} ºC",
+                      style: const TextStyle(fontSize: 70, color: Constants.textColor,
+                          fontWeight: FontWeight.bold),),),
               ],),),
 
-            const Center(child: Text(Constants.errorMessage,
-              style: TextStyle(fontSize: 20, color: Constants.errorColor),),),
+            Center(child: Text(errorMessage, style: TextStyle(fontSize: 15,
+                color: (isNight) ? Constants.errorLightColor : Constants.errorDarkColor),),),
 
-            (Constants.errorMessage == '') ?
+            (errorMessage == '') ?
             const SizedBox(height: 40,)
             :
             const SizedBox(height: 15,)

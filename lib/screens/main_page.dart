@@ -1,5 +1,4 @@
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:glartek_tecnical_challenge/screens/visual_weather_page.dart';
 
@@ -21,6 +20,8 @@ class _MainPageState extends State<MainPage> {
     super.initState();
   }
 
+  String errorMessage = '';
+
   String dropValue = '';
 
   final List<String> dropOptions = [
@@ -36,7 +37,14 @@ class _MainPageState extends State<MainPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title, style: const TextStyle(fontFamily: 'Lobster'),),
+        title:
+        Row(
+          children: <Widget>[
+            Text(widget.title, style: const TextStyle(fontFamily: 'Lobster'),),
+            const SizedBox(width: 5,),
+            const Image(image: AssetImage(Constants.weatherIcon), width: 50, height:50)
+          ],
+        ),
         backgroundColor: Constants.bgColorAppBar,
       ),
       body:
@@ -44,56 +52,76 @@ class _MainPageState extends State<MainPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Expanded(child:
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
 
-            SizedBox(
-                width: MediaQuery.of(context).size.width - 150,
-                child:
-                  DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    hint: const Text('Selecionar Cidade'),
-                    decoration: InputDecoration(
-                      label: const Text('Cidade'),
-                      border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6)
-                      )),
-                    value: (dropValue.isEmpty) ? null : dropValue,
-                    onChanged: (selected) => setState(() => dropValue = selected! ),
-                    items: dropOptions.map((op) => DropdownMenuItem(
-                    value: op,
-                    child: Text(op)
-                  )).toList(),
-                  )),
+                SizedBox(width: MediaQuery.of(context).size.width - 150,
+                  child: const Image(image: AssetImage(Constants.cityImg)),),
 
-            const SizedBox(height: 30,),
+                SizedBox(
+                    width: MediaQuery.of(context).size.width - 150,
+                    child:
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      hint: const Text('Selecionar Cidade'),
+                      decoration: InputDecoration(
+                          label: const Text('Cidade'),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6)
+                          )),
+                      value: (dropValue.isEmpty) ? null : dropValue,
+                      onChanged: (selected) => setState(() {
+                        dropValue = selected!;
+                        errorMessage = '';
+                      }),
+                      items: dropOptions.map((op) => DropdownMenuItem(
+                          value: op,
+                          child: Text(op)
+                      )).toList(),
+                    )),
 
-            ElevatedButton(
-              onPressed: () async {
-                if (dropValue.isEmpty) {
-                    print("is empty, select a city");
-                }
-                else {
-                  Citys c = Constants.cityName.keys.firstWhere((v) =>
-                  Constants.cityName[v] == dropValue.toString());
+                const SizedBox(height: 30,),
 
-                  Navigator.push(context,
-                      MaterialPageRoute(builder:
-                          (context) => VisualWeatherPage(city: c)));
+                ElevatedButton(
+                  onPressed: () async {
+                    if (dropValue.isEmpty) {
+                      setState(() {
+                        if (errorMessage == '') {
+                          errorMessage = "Selecione uma cidade";
+                        }
+                      });
+                    }
+                    else {
+                      Citys c = Constants.cityName.keys.firstWhere((v) =>
+                      Constants.cityName[v] == dropValue.toString());
 
-                }
-              },
-              style: ButtonStyle(
-                minimumSize: MaterialStateProperty.all(Size(MediaQuery.of(context).size.width - 250, 40)),
-                elevation: MaterialStateProperty.all(0),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
+                      Navigator.push(context,
+                          MaterialPageRoute(builder:
+                              (context) => VisualWeatherPage(city: c)));
+
+                    }
+                  },
+                  style: ButtonStyle(
+                    minimumSize: MaterialStateProperty.all(Size(MediaQuery.of(context).size.width - 250, 40)),
+                    elevation: MaterialStateProperty.all(0),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                    ),
                   ),
+                  child: const Text('Pesquisar'),
                 ),
-              ),
-              child: const Text('Pesquisar'),
+              ],),
             ),
-          ],
-        ),
+
+            Center(child: Text(errorMessage, style: const TextStyle(fontSize: 15,
+                color: Constants.errorDarkColor),),),
+
+            const SizedBox(height: 15,)
+          ],),
       ),
 
       // This trailing comma makes auto-formatting nicer for build methods.
