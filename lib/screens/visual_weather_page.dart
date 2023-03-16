@@ -1,10 +1,6 @@
-
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_cube/flutter_cube.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import '../constants.dart';
 import '../models/city.dart';
@@ -21,15 +17,9 @@ class VisualWeatherPage extends StatefulWidget {
 
 class _VisualWeatherPageState extends State<VisualWeatherPage> {
 
-  late Object skyState;
-
   @override
   void initState() {
     super.initState();
-    if (Platform.isAndroid) {
-      SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-          systemNavigationBarIconBrightness: Brightness.light));
-    }
     _getData(widget.city);
   }
 
@@ -37,8 +27,10 @@ class _VisualWeatherPageState extends State<VisualWeatherPage> {
   int? temperature;
   String? state;
   DateTime? dt;
+  String? skyStateAsset;
 
   bool isLoaded = false;
+
   Color backgroundColor = Constants.bgColorDay;
 
   _getData(Citys city) async {
@@ -53,11 +45,17 @@ class _VisualWeatherPageState extends State<VisualWeatherPage> {
       state = currentWeather.weather.main;
       dt = currentWeather.dtTxt;
 
-      backgroundColor = (dt!.hour < 6 || dt!.hour > 18 ) ?
-      Constants.bgColorNight : Constants.bgColorDay;
+      backgroundColor = (dt!.hour < 6 || dt!.hour > 18) ? Constants.bgColorNight :
+      (state == Constants.stateMainStr[SkyState.rain]) ? Constants.bgColorCloudyDay : Constants.bgColorDay;
+      Constants.stateMainStr.forEach((key, value) {
+        if (value == state) {
+          skyStateAsset = Constants.stateAsset[key];
+        }
+      });
+      skyStateAsset ??= "Assets/sun.glb";
+
       isLoaded = true;
 
-      skyState = Object(fileName: "assets/rain/Project Name.obj");
       // if (kDebugMode) {
       //   print("weather");
       //   print("temperature $temperature");
@@ -75,25 +73,61 @@ class _VisualWeatherPageState extends State<VisualWeatherPage> {
         title: Text(Constants.cityName[widget.city] ?? "Cidade"),
         backgroundColor: Constants.bgColorAppBar,
         leading: BackButton(
-          onPressed: () => Navigator.pop(context),
-        ),
+          onPressed: () => Navigator.pop(context),),
       ),
       backgroundColor: backgroundColor,
       body:
-        Visibility(
-          visible: isLoaded,
-          replacement: const Center(
-            child: CircularProgressIndicator(),
-          ),
-          child: Center(
-            child: ModelViewer(src: 'assets/Untitled.glb')
-            // child: Cube(onSceneCreated: (Scene scene) {
-            //   scene.world.add(Object(fileName: 'assets/rain/Project Name.obj',));
-            //   scene.camera.zoom = 4;
-            //
-            // }),
-          ),
-        ),
+        (!isLoaded) ?
+          // Circular Progress Indicator
+          const Center(
+            child: SpinKitCircle(
+              size: 100,
+              color: Colors.white,
+            )
+          )
+        :
+        Column(
+          children: [
+            Expanded(
+              child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+              // DateTime
+                Center(child: Text("${dt!.day}-${dt!.month}-${dt!.year} "
+                    "${dt!.hour}:${(dt!.minute < 10) ? '0' : ''}${dt!.minute}"
+                    ":${(dt!.minute < 10) ? '0' : ''}${dt!.second}",
+                  style: const TextStyle(fontSize: 30, color: Constants.textColor),),),
+
+                // 3D Visualizer
+                SizedBox(
+                  height: 300,
+                  child: Center(
+                    child:
+                    ModelViewer(
+                      src: skyStateAsset!,
+                      autoRotate: true,
+                      //cameraControls: false,
+                      disableZoom: true,
+                      // disablePan: true,
+                      rotationPerSecond: "30deg",
+                    ),
+                  ),
+                ),
+
+                // Temperature
+                Center(child: Text("$temperature ºC",
+                  style: const TextStyle(fontSize: 70, color: Constants.textColor,
+                      fontWeight: FontWeight.bold),),),
+              ],),),
+
+            const Center(child: Text(Constants.errorMessage,
+              style: TextStyle(fontSize: 20, color: Constants.errorColor),),),
+
+            (Constants.errorMessage == '') ?
+            const SizedBox(height: 40,)
+            :
+            const SizedBox(height: 15,)
+          ],),
     );
   }
 }

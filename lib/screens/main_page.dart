@@ -16,6 +16,11 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
   String dropValue = '';
 
   final List<String> dropOptions = [
@@ -62,7 +67,7 @@ class _MainPageState extends State<MainPage> {
             const SizedBox(height: 30,),
 
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (dropValue.isEmpty) {
                     print("is empty, select a city");
                 }
@@ -73,6 +78,7 @@ class _MainPageState extends State<MainPage> {
                   Navigator.push(context,
                       MaterialPageRoute(builder:
                           (context) => VisualWeatherPage(city: c)));
+
                 }
               },
               style: ButtonStyle(
