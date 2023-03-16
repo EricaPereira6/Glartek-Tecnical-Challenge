@@ -32,7 +32,7 @@ class Constants {
     Citys.lisboa:  "Lisboa",
     Citys.porto:   "Porto"};
 
-  static const String apiKey = "";
+  static const String apiKey = "7bb78224c14db81f46bc1d6f86a3e8c3";
 
   static const Color bgColorAppBar = Color.fromRGBO(70, 160, 190, 1);
   static const Color bgColorDay =    Color.fromRGBO(150, 240, 250, 0.85);
